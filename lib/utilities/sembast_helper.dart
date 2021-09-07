@@ -4,24 +4,33 @@ import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 
 class SembastHelper {
-  Database? db;
+  Database? _db;
 
-  createDatabase() async {
-    String dbPath = 'sample.db';
+  Future<Database?> get db async {
+    if (_db != null) {
+      return _db;
+    }
+    return await createDatabase();
+  }
+
+  Future<Database?> createDatabase() async {
+    String dbPath = 'countries.db';
     var dir = await getApplicationDocumentsDirectory();
-    db = await databaseFactoryIo.openDatabase(
+    final database = await databaseFactoryIo.openDatabase(
       join(
         dir.path,
         dbPath,
       ),
       version: 1,
     );
+    return database;
   }
 
   Future<List?> readData() async {
+    final Database? database = await db;
     var store = StoreRef.main();
-    if (db != null) {
-      final record = await store.record('countries').get(db!) as List?;
+    if (database != null) {
+      final record = await store.record('countries').get(database) as List?;
       if (record != null) {
         return record;
       }
@@ -32,11 +41,9 @@ class SembastHelper {
   }
 
   writeData(List obj) async {
+    final Database? database = await db;
+
     var store = StoreRef.main();
-    if (db != null) {
-      return await store.record('countries').put(db!, obj);
-    } else {
-      throw Exception("Cannot find the database");
-    }
+    return await store.record('countries').put(database!, obj);
   }
 }
